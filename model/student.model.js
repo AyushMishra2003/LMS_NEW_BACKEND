@@ -1,5 +1,7 @@
 import { model, Schema } from "mongoose";
-
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 
 const studentSchema=new Schema(
@@ -7,6 +9,14 @@ const studentSchema=new Schema(
         name:{
             type:String,
             required:true
+        },
+        email:{
+          type:String,
+          required:true
+        },
+        password:{
+          type:String,
+          required:true
         },
         phoneNumber:{
             type:Number,

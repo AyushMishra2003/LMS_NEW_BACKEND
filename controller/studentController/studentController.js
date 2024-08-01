@@ -11,17 +11,25 @@ const cokkieOption={
 const addStudent=async(req,res,next)=>{
     try{
        
-        const {name,phoneNumber,whastappNumber,gender}=req.body
+        const {name,phoneNumber,whastappNumber,gender,email,password}=req.body
 
-        if(!name || !phoneNumber || !whastappNumber || !gender){
+        if(!name || !phoneNumber || !whastappNumber || !gender || !email || !password){
             return next(new AppError("All Filed are Required",400))
+        }
+
+        const alreadyStudent=await Student.findOne({email})
+
+        if(alreadyStudent){
+            return next(new AppError("Already Student Login",400))
         }
 
         const student=await Student.create({
             name,
             phoneNumber,
             whastappNumber,
-            gender
+            gender,
+            email,
+            password
         })
 
         if(!student){
@@ -38,7 +46,7 @@ const addStudent=async(req,res,next)=>{
 
          await student.save()
    
-         admin.password=undefined
+         student.password=undefined
     
 
          res.status(200).json({

@@ -7,6 +7,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 import adminRoute from "./routes/admin.route.js";
 import errorMiddleware from "./middleware/error.middlware.js";
+import studentRouter from "./routes/student.route.js";
+import courseRouter from "./routes/course.route.js";
+import upload from "./middleware/multer.middleware.js";
 
 dotenv.config();
 
@@ -40,6 +43,8 @@ app.use(
 // Routes
 
 app.use("/api/v1/admin",adminRoute)
+app.use("/api/v1/student",studentRouter)
+app.use("/api/v1/course",upload.single("photo"),courseRouter)
 
 // Error handling middleware
 app.use(errorMiddleware);
