@@ -239,10 +239,112 @@ const updateCourse=async(req,res,next)=>{
         res.status(200).json({
           success: true,
           message: "Course Updated Succesfully",
+          data:course
         });
 
     }catch(error){
         return next(new AppError(error.message,500))
+    }
+}
+
+const addLecture=async(req,res,next)=>{
+    try{    
+        const { id } = req.params
+        const { title, description, lecture } = req.body
+
+        const course = await Courses.findById(id)
+
+        if (!course) {
+            return next(new AppError('No Course Found', 400))
+        }
+
+    
+        if (!title ||  !description) {
+            return next(new AppError('All fields are required', 400))
+        }
+
+    
+       const lectureData = {
+            title,
+           description,
+            lecture: {
+              public_id: '',
+              secure_url: '',
+          }
+       }
+
+    
+       if (!lectureData) {
+           return next(new AppError('Failed to save lecture', 400))
+       }
+
+       if (req.file) {
+           const result = await cloudinary.v2.uploader.upload(req.file.path, {
+            folder: 'lms',
+            resource_type: 'video'
+          })
+
+        if (result) {
+            lectureData.lecture.public_id = result.public_id
+            lectureData.lecture.secure_url =result.secure_url
+        }        
+        fs.rm(`uploads/${req.file.filename}`)
+    }
+
+     course.lectures.push(lectureData)
+     course.numberOfLecture = course.lectures.length
+
+    
+    await course.save()
+
+    res.status(200).json({
+        success: true,
+        message: "Lectures successfully added to the course",
+        course
+    })
+    }catch(error){
+        return next(new AppError(error.message))
+    }
+}
+
+const deleteLecture = async (req, res, next) => {
+    try {
+        const { id } = req.params
+        const { lectureId } = req.params
+        const course = await Courses.findById(id)
+
+        if (!course) {
+            return next(new AppError('No Course Found', 400))
+        }
+
+        const lectureIndex = course.lectures.findIndex(
+            (lecture) => lecture._id.toString() === lectureId.toString())
+
+        if (lectureIndex === -1) {
+            return next(new AppError('No Lecture Found', 400))
+        }
+
+        // Delete the lecture video from Cloudinary
+        await cloudinary.v2.uploader.destroy(
+            course.lectures[lectureIndex].lecture.public_id,
+            {
+                resource_type: 'video',
+            }
+        )
+        course.lectures.splice(lectureIndex, 1)
+
+        course.numberOfLecture = course.lectures.length
+
+        await course.save()
+
+        res.status(200).json({
+            status: true,
+            message: "Lecture deleted successfully",
+            course
+        })
+    } catch (e) {
+        // Handle unexpected errors
+        return next(new AppError(e.message, 500))
     }
 }
 
@@ -255,5 +357,7 @@ export {
     getCourse,
     getSingleCourse,
     deleteCourse,
-    updateCourse
+    updateCourse,
+    addLecture,
+    deleteLecture
 }

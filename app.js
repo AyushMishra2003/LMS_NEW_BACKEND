@@ -44,7 +44,7 @@ app.use(
 
 app.use("/api/v1/admin",adminRoute)
 app.use("/api/v1/student",studentRouter)
-app.use("/api/v1/course",upload.single("photo"),courseRouter)
+app.use("/api/v1/course",courseRouter)
 
 // Error handling middleware
 app.use(errorMiddleware);

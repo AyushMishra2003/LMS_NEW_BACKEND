@@ -42,7 +42,25 @@ const CourseSchema=new Schema(
          },
          Audience:{
             type:Array
-         }
+         },
+         lectures:[ 
+            {
+                title:String,
+                description:String,
+                lecture:{
+                    public_id:{
+                    type:String
+                    },
+                    secure_url:{
+                    type:String
+                    }
+                }
+            }
+        ],
+        numberOfLecture:{
+         type:Number,
+         default:0
+     },
     },
     {
         timestamps:true  
