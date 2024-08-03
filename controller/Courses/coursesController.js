@@ -139,6 +139,36 @@ const addAudience=async(req,res,next)=>{
     }
 }
 
+const addWhatLearn=async(req,res,next)=>{
+    try{
+        const {learn}=req.body
+        const {id}=req.params
+        
+        const course=await Courses.findById(id)
+
+        if(!course){
+            return next(new AppError("Course Not Found",404))
+        }
+
+        if(!learn){
+            return next(new AppError("What We Learn Required",400))
+        }
+
+        course.whatWeLearn.push(learn)
+
+         await course.save()
+
+         res.status(200).json({
+            success:true,
+            message:"WhatWe Learn Added Succesfully",
+            data:course
+         })
+
+    }catch(error){
+        return next(new AppError(error.message,500))
+    }
+}
+
 const getCourse=async(req,res,next)=>{
     try{
         const allCourse=await Courses.find({})
@@ -349,6 +379,8 @@ const deleteLecture = async (req, res, next) => {
 }
 
 
+
+
 export {
     addCourse,
     addMeterial,
@@ -359,5 +391,6 @@ export {
     deleteCourse,
     updateCourse,
     addLecture,
-    deleteLecture
+    deleteLecture,
+    addWhatLearn
 }
