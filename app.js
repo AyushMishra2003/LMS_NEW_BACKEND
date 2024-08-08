@@ -26,6 +26,8 @@ const allowedOrigins = [
   "https://website3999.online",
   "http://localhost:5173",
   "https://lmspankaj.netlify.app/",
+  "http://localhost:5174",
+  "https://skillpathsalallms.netlify.app", // Add the new origin
 ];
 
 app.use(
@@ -45,7 +47,6 @@ app.use(
 );
 
 // Routes
-
 app.use("/api/v1/admin", adminRoute);
 app.use("/api/v1/student", studentRouter);
 app.use("/api/v1/course", courseRouter);
@@ -56,7 +57,7 @@ app.use(errorMiddleware);
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "Welcome to LMS Api,Serving is running",
+    message: "Welcome to LMS Api, Serving is running",
   });
 });
 
@@ -73,80 +74,77 @@ app.all("*", (req, res) => {
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: [
-      "https://website3999.online",
-      "http://localhost:5173",
-      "https://localhost:5173",
-    ],
+    origin: allowedOrigins, // Use the same allowedOrigins array
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-// io.on("connection", (socket) => {
-//   console.log(`User Connected: ${socket.id}`);
+// Uncomment and use the socket.io connection code as needed
+io.on("connection", (socket) => {
+  console.log(`User Connected: ${socket.id}`);
 
-//   socket.on("establish_connection", async ({ sender, recipient }) => {
-//     try {
-//       socket.join(sender);
-//       socket.join(recipient);
-//       console.log("Users are connected");
+  socket.on("establish_connection", async ({ sender, recipient }) => {
+    try {
+      socket.join(sender);
+      socket.join(recipient);
+      console.log("Users are connected");
 
-//       socket.emit("connection_established", {
-//         success: true,
-//         message: `Connected to ${recipient}`,
-//       });
+      socket.emit("connection_established", {
+        success: true,
+        message: `Connected to ${recipient}`,
+      });
 
-//       console.log("users connected bruh");
+      console.log("users connected bruh");
 
-//       const messages = await Message.find({
-//         $or: [
-//           { sender, recipient },
-//           { sender: recipient, recipient: sender },
-//         ],
-//       }).sort("timestamp");
+      const messages = await Message.find({
+        $or: [
+          { sender, recipient },
+          { sender: recipient, recipient: sender },
+        ],
+      }).sort("timestamp");
 
-//       socket.emit("message_history", messages);
-//     } catch (error) {
-//       console.error("Error in establishing connection:", error);
-//       socket.emit("error", "Internal Server Error");
-//     }
-//   });
+      socket.emit("message_history", messages);
+    } catch (error) {
+      console.error("Error in establishing connection:", error);
+      socket.emit("error", "Internal Server Error");
+    }
+  });
 
-//   socket.on(
-//     "send_message",
-//     async ({ sender, recipient, content, media, mediaType, time }) => {
-//       try {
-//         let imageUrl = null;
+  socket.on(
+    "send_message",
+    async ({ sender, recipient, content, media, mediaType, time }) => {
+      try {
+        let imageUrl = null;
 
-//         if (media) {
-//           const result = await uploadToCloudinary(Buffer.from(media));
-//           imageUrl = result.secure_url;
-//         }
+        if (media) {
+          const result = await uploadToCloudinary(Buffer.from(media));
+          imageUrl = result.secure_url;
+        }
 
-//         const message = new Message({
-//           sender,
-//           recipient,
-//           content,
-//           images: imageUrl ? { secure_url: imageUrl } : undefined,
-//           time,
-//         });
+        const message = new Message({
+          sender,
+          recipient,
+          content,
+          images: imageUrl ? { secure_url: imageUrl } : undefined,
+          time,
+        });
 
-//         await message.save();
+        await message.save();
 
-//         console.log(message);
+        console.log(message);
 
-//         io.to(sender).emit("receive_message", message);
-//         io.to(recipient).emit("receive_message", message);
-//       } catch (error) {
-//         console.error("Error sending message:", error);
-//       }
-//     }
-//   );
+        io.to(sender).emit("receive_message", message);
+        io.to(recipient).emit("receive_message", message);
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
+    }
+  );
 
-//   socket.on("disconnect", () => {
-//     console.log(`User Disconnected: ${socket.id}`);
-//   });
-// });
+  socket.on("disconnect", () => {
+    console.log(`User Disconnected: ${socket.id}`);
+  });
+});
 
 export { app, server, io };
