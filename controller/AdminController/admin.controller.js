@@ -1,159 +1,143 @@
-import Admin from "../../model/admin.model.js"
-import AppError from '../../utils/error.utlis.js'
+import Admin from "../../model/admin.model.js";
+import AppError from "../../utils/error.utlis.js";
 
-const cokkieOption={ 
-  secure:process.env.NODE_ENV==='production'?true:false,
-  maxAge:7*24*60*60*1000,
-  httpOnly:true,
-}
+const cokkieOption = {
+  secure: process.env.NODE_ENV === "production" ? true : false,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  httpOnly: true,
+};
 
+const addAdmin = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
 
-const addAdmin=async(req,res,next)=>{
-   try{
-      const {email,password}=req.body
+    if (!email || !password) {
+      return next(new AppError("All Field are Required", 402));
+    }
 
-      if(!email || !password){
-        return next(new AppError("All Field are Required",402))
-      }
+    const emailExist = await Admin.findOne({ email });
 
-      const emailExist=await Admin.findOne({email})
+    if (emailExist) {
+      return next(new AppError("Email Already Exist", 400));
+    }
 
-      if(emailExist){
-        return next(new AppError("Email Already Exist",400))
-      }
+    const admin = await Admin.create({
+      email,
+      password,
+    });
 
-      const admin=await Admin.create({
-         email,
-         password
-      })
+    if (!admin) {
+      return next(new AppError("Admin not created", 400));
+    }
 
-      if(!admin){
-        return next(new AppError("Admin not created",400))
-      }
+    await admin.save();
 
-      await admin.save()
-
-          
-  
-
-    const token=await admin.generateJWTToken()
+    const token = await admin.generateJWTToken();
 
     console.log(token);
 
-    res.cookie('token',token,cokkieOption)
+    res.cookie("token", token, cokkieOption);
 
-    admin.token=token
+    admin.token = token;
 
-    await admin.save()
-  
-    admin.password=undefined
-    
+    await admin.save();
 
-      res.status(200).json({
-        success:true,
-        message:"Admin Created Succesfully",
-        data:admin
-      })
+    admin.password = undefined;
 
-   }catch(error){
-    return next(new AppError(error.message,500))
-   }
-}
+    res.status(200).json({
+      success: true,
+      message: "Admin Created Succesfully",
+      data: admin,
+    });
+  } catch (error) {
+    return next(new AppError(error.message, 500));
+  }
+};
 
-const loginAdmin=async(req,res,next)=>{
-  try{
-
+const loginAdmin = async (req, res, next) => {
+  try {
     const { email, password } = req.body;
 
-        console.log(req.body);
-        
-        if (!email || !password) {
-            return next(new AppError('All fields are required', 400));
-        }
+    console.log(req.body);
 
-        const admin = await Admin.findOne({ email }).select('+password');
+    if (!email || !password) {
+      return next(new AppError("All fields are required", 400));
+    }
 
-        if (!admin) {
-            return next(new AppError('Email or Password not matched', 400));
-        }
+    const admin = await Admin.findOne({ email }).select("+password");
 
-        const isPasswordMatch = await admin.comparePassword(password);
+    if (!admin) {
+      return next(new AppError("Email or Password not matched", 400));
+    }
 
-        if (!isPasswordMatch) {
-            return next(new AppError('Email or Password not matched', 400));
-        }
+    const isPasswordMatch = await admin.comparePassword(password);
 
-        const token = await admin.generateJWTToken();
+    if (!isPasswordMatch) {
+      return next(new AppError("Email or Password not matched", 400));
+    }
 
-        console.log(token);
+    const token = await admin.generateJWTToken();
 
-        admin.token=token
+    console.log(token);
 
-        // Remove sensitive information from user object
-        admin.password = undefined;
+    admin.token = token;
 
-        // Set cookie with the token
-        res.cookie('token', token, {
-            httpOnly: true,
-            maxAge: 3600000, // Example: cookie expires in 1 hour (in milliseconds)
-            sameSite: 'strict' // Recommended to prevent CSRF
-        });
+    // Remove sensitive information from user object
+    admin.password = undefined;
 
-        // Debugging: Log parsed cookies from the request
-        console.log("cokkie is",req.cookies);
+    // Set cookie with the token
+    res.cookie("token", token, {
+      httpOnly: true,
+      maxAge: 3600000, // Example: cookie expires in 1 hour (in milliseconds)
+      sameSite: "strict", // Recommended to prevent CSRF
+    });
 
-        res.status(200).json({
-            success: true,
-            message: 'Login Successfully',
-            data: admin
-        });
-  }catch(error){
-    return next(new AppError(error.message,500))
+    // Debugging: Log parsed cookies from the request
+    console.log("cokkie is", req.cookies);
+
+    res.status(200).json({
+      success: true,
+      message: "Login Successfully",
+      data: admin,
+    });
+  } catch (error) {
+    return next(new AppError(error.message, 500));
   }
-}
+};
 
-const getAdmin=async(req,res,next)=>{
-  try{
-    
-    const user = await Admin.find().select('-password');
+const getAdmin = async (req, res, next) => {
+  try {
+    const user = await Admin.find().select("-password");
 
-    if(!user){
-      return next(new AppError("Reterive not Succesfully",400))
+    if (!user) {
+      return next(new AppError("Reterive not Succesfully", 400));
     }
 
     res.status(200).json({
-      success:true,
-      message:"All Admin are:-",
-      data:user
-    })
-
-
-  }catch(error){
-    return next(new AppError(error.message,500))
+      success: true,
+      message: "All Admin are:-",
+      data: user,
+    });
+  } catch (error) {
+    return next(new AppError(error.message, 500));
   }
-}
+};
 
-const logoutAdmin=async(req,res,next)=>{
-  try{ 
-          res.cookie('token',null,{
-              secure:true,
-              maxAge:0,
-              httpOnly:true
-          })
-      
-          res.status(200).json({
-              success:true,
-              message:"User logged out successfully"
-          })
-      }catch(error){
-      return next(new AppError(error.message,500))
-  }
-  }
-  
+const logoutAdmin = async (req, res, next) => {
+  try {
+    res.cookie("token", null, {
+      secure: true,
+      maxAge: 0,
+      httpOnly: true,
+    });
 
-export {
-    addAdmin,
-    loginAdmin,
-    getAdmin,
-    logoutAdmin
-}
+    res.status(200).json({
+      success: true,
+      message: "User logged out successfully",
+    });
+  } catch (error) {
+    return next(new AppError(error.message, 500));
+  }
+};
+
+export { addAdmin, loginAdmin, getAdmin, logoutAdmin };

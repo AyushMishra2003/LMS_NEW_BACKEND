@@ -22,7 +22,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev")); // Logging requests to the console
 
 // CORS configuration
-const allowedOrigins = ["https://website3999.online", "http://localhost:5173"];
+const allowedOrigins = [
+  "https://website3999.online",
+  "http://localhost:5173",
+  "https://lmspankaj.netlify.app/",
+];
 
 app.use(
   cors({
@@ -42,18 +46,18 @@ app.use(
 
 // Routes
 
-app.use("/api/v1/admin",adminRoute)
-app.use("/api/v1/student",studentRouter)
-app.use("/api/v1/course",courseRouter)
+app.use("/api/v1/admin", adminRoute);
+app.use("/api/v1/student", studentRouter);
+app.use("/api/v1/course", courseRouter);
 
 // Error handling middleware
 app.use(errorMiddleware);
 
 app.get("/", (req, res) => {
-   res.status(200).json({
-    success:true,
-    message:"Welcome to LMS Api,Serving is running"
-   })
+  res.status(200).json({
+    success: true,
+    message: "Welcome to LMS Api,Serving is running",
+  });
 });
 
 // Catch-all route for undefined endpoints
