@@ -1,5 +1,7 @@
 import Product from "../../model/product.model.js";
 import AppError from "../../utils/error.utlis.js";
+import cloudinary from "cloudinary";
+import fs from "fs/promises";
 
 const addProduct = async (req, res, next) => {
   try {
@@ -25,14 +27,18 @@ const addProduct = async (req, res, next) => {
       return next(new AppError("Product Not Found", 500));
     }
 
+    console.log(product);
+
     if (req.file) {
       console.log(req.file);
       const result = await cloudinary.v2.uploader.upload(req.file.path, {
         folder: "lms",
       });
+      console.log(result);
+
       if (result) {
-        (product.photo.public_id = result.public_id),
-          (product.photo.secure_url = result.secure_url);
+        (product.productPhoto.public_id = result.public_id),
+          (product.productPhoto.secure_url = result.secure_url);
       }
       fs.rm(`uploads/${req.file.filename}`);
     }
@@ -92,8 +98,8 @@ const updateProduct = async (req, res, next) => {
         folder: "lms",
       });
       if (result) {
-        (product.photo.public_id = result.public_id),
-          (product.photo.secure_url = result.secure_url);
+        (product.productPhoto.public_id = result.public_id),
+          (product.productPhoto.secure_url = result.secure_url);
       }
       fs.rm(`uploads/${req.file.filename}`);
     }

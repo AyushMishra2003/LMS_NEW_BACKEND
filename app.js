@@ -10,6 +10,7 @@ import errorMiddleware from "./middleware/error.middlware.js";
 import studentRouter from "./routes/student.route.js";
 import courseRouter from "./routes/course.route.js";
 import upload from "./middleware/multer.middleware.js";
+import productRoute from "./routes/product.route.js";
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use(
 app.use("/api/v1/admin", adminRoute);
 app.use("/api/v1/student", studentRouter);
 app.use("/api/v1/course", courseRouter);
+app.use("/api/v1/product", productRoute);
 
 // Error handling middleware
 app.use(errorMiddleware);
